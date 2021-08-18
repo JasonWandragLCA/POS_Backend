@@ -124,7 +124,7 @@ def user_registration():
         with sqlite3.connect("pos.db") as conn:
             conn.row_factory = dict_factory
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM user WHERE email=?, password=?", (email, password,))
+            cursor.execute("SELECT * FROM user WHERE email=? AND password=?", (email, password,))
             user = cursor.fetchone()
 
         response['status_code'] = 200
