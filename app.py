@@ -1,6 +1,8 @@
 import hmac
 import sqlite3
 import datetime
+import sys
+import logging
 
 
 from flask import Flask, request, jsonify
@@ -79,6 +81,11 @@ init_post_table()
 #     return userid_table.get(user_id, None)
 
 app = Flask(__name__)
+
+
+app.logger.addHandler(logging.StreamHandler(sys.stdout))
+app.logger.setLevel(logging.ERROR)
+
 CORS(app)
 app.debug = True
 app.config['SECRET_KEY'] = 'super-secret'
