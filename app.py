@@ -107,21 +107,7 @@ def user_registration():
 
     if request.method == "GET":
         # LOGIN
-        if request.json['email']:
-            email = request.json['email']
-            password = request.json['password']
-
-            with sqlite3.connect("pos.db") as conn:
-                conn.row_factory = dict_factory
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM user WHERE email= ? ", (str(email),))
-
-                user = cursor.fetchone()
-
-            response['status_code'] = 200
-            response['data'] = user
-            return response
-        else:
+        if not request.json['email']:
             with sqlite3.connect("pos.db") as conn:
                 conn.row_factory = dict_factory
                 cursor = conn.cursor()
@@ -131,6 +117,26 @@ def user_registration():
             response['status_code'] = 200
             response['data'] = users
             return response
+        else:
+            try:
+                full_name = request.json['full_name']
+                email = request.json['email']
+                password = request.json['password']
+
+                with sqlite3.connect("pos.db") as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO user("
+                                   "full_name,"
+                                   "email,"
+                                   "password) VALUES(?, ?, ?)", (full_name, email, password))
+                    conn.commit()
+                    response["message"] = "successfully added new user to database"
+                    response["status_code"] = 201
+                return response
+            except ValueError:
+                response["message"] = "Failed"
+                response["status_code"] = 209
+                return response
 
     if request.method == "POST":
         # REGISTER
