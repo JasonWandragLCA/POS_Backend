@@ -3,12 +3,11 @@ import sqlite3
 import datetime
 import sys
 import logging
-
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 
+# This function create dictionaries out of SQL rows, so that the data follows JSON format
 def dict_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
@@ -23,22 +22,7 @@ class User(object):
         self.password = password
 
 
-# def fetch_users():
-#     with sqlite3.connect('blog.db') as conn:
-#         cursor = conn.cursor()
-#         cursor.execute("SELECT * FROM user")
-#         users = cursor.fetchall()
-#
-#         new_data = []
-#
-#         for data in users:
-#             new_data.append(User(data[0], data[3], data[4]))
-#     return new_data
-#
-#
-# users = fetch_users()
-
-
+# Function to create USER table
 def init_user_table():
     conn = sqlite3.connect('pos.db')
     print("Opened database successfully")
@@ -51,9 +35,10 @@ def init_user_table():
     conn.close()
 
 
-def init_post_table():
+# Function to create PRODUCT table
+def init_product_table():
     with sqlite3.connect('pos.db') as conn:
-        conn.execute("CREATE TABLE IF NOT EXISTS products (prod_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        conn.execute("CREATE TABLE IF NOT EXISTS products(prod_id INTEGER PRIMARY KEY AUTOINCREMENT,"
                      "user_id INTEGER NOT NULL,"
                      "title TEXT NOT NULL,"
                      "description TEXT NOT NULL,"
@@ -64,37 +49,21 @@ def init_post_table():
 
 
 init_user_table()
-init_post_table()
+init_product_table()
 
-# username_table = { u.username: u for u in users }
-# userid_table = { u.id: u for u in users }
-
-
-# def authenticate(username, password):
-#     user = username_table.get(username, None)
-#     if user and hmac.compare_digest(user.password.encode('utf-8'), password.encode('utf-8')):
-#         return user
-#
-#
-# def identity(payload):
-#     user_id = payload['identity']
-#     return userid_table.get(user_id, None)
-
+# API setup
 app = Flask(__name__)
-
-
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
 app.logger.setLevel(logging.ERROR)
-
 CORS(app)
 app.debug = True
 app.config['SECRET_KEY'] = 'super-secret'
 
 
+# ROUTES
 @app.route('/', methods=["GET"])
 def welcome():
     response = {}
-
     if request.method == "GET":
         response["message"] = "Welcome"
         response["status_code"] = 201
@@ -105,8 +74,8 @@ def welcome():
 def user_registration():
     response = {}
 
+    # Fetches ALL users
     if request.method == "GET":
-        # LOGIN
         with sqlite3.connect("pos.db") as conn:
             conn.row_factory = dict_factory
             cursor = conn.cursor()
@@ -117,6 +86,7 @@ def user_registration():
         response['data'] = users
         return response
 
+    # LOGIN
     if request.method == "PATCH":
         email = request.json["email"]
         password = request.json["password"]
@@ -131,8 +101,8 @@ def user_registration():
         response['data'] = user
         return response
 
+    # REGISTER
     if request.method == "POST":
-        # REGISTER
         try:
             full_name = request.json['full_name']
             email = request.json['email']
@@ -168,9 +138,11 @@ def get_user(user_id):
     response['data'] = user
     return response
 
+
 @app.route('/product/', methods=["POST", "GET"])
 def products():
     response = {}
+
     # GET ALL PRODUCTS
     if request.method == "GET":
         with sqlite3.connect("pos.db") as conn:
@@ -182,6 +154,8 @@ def products():
         response['status_code'] = 200
         response['data'] = users
         return response
+
+    # Create a new product
     if request.method == "POST":
         try:
             user_id = request.json['user_id']
@@ -206,6 +180,23 @@ def products():
             response["message"] = "Failed to create product"
             response["status_code"] = 209
             return response
+
+
+@app.route('/product/<int:user_id>', methods=["GET"])
+def get_user_products(user_id):
+    response = {}
+
+    # GET ALL PRODUCTS
+    if request.method == "GET":
+        with sqlite3.connect("pos.db") as conn:
+            conn.row_factory = dict_factory
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM products WHERE user_id=", (user_id,))
+            user_products = cursor.fetchall()
+
+        response['status_code'] = 200
+        response['data'] = user_products
+        return response
 
 
 if __name__ == '__main__':
