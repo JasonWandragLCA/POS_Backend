@@ -191,7 +191,7 @@ def get_user_products(user_id):
         with sqlite3.connect("pos.db") as conn:
             conn.row_factory = dict_factory
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM products WHERE user_id=", (user_id,))
+            cursor.execute("SELECT * FROM products WHERE user_id=" + str(user_id))
             user_products = cursor.fetchall()
 
         response['status_code'] = 200
