@@ -199,5 +199,31 @@ def get_user_products(user_id):
         return response
 
 
+@app.route('/edit-product/<int:product_id>', methods=["PUT"])
+def change_user_product(product_id):
+    response = {}
+
+    if request.method == "PUT":
+        try:
+            user_id = request.json['user_id']
+            title = request.json['title']
+            description = request.json['description']
+            image = request.json['image']
+            price = request.json['price']
+
+            with sqlite3.connect("pos.db") as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE product SET title=? AND description=? AND image=? AND price=? WHERE user_id=? "
+                               "AND prod_id=?", (title, description, image, price, user_id, product_id))
+                conn.commit()
+                response["message"] = "Product was successfully updated"
+                response["status_code"] = 201
+            return response
+        except ValueError:
+            response["message"] = "Failed to update product"
+            response["status_code"] = 209
+            return response
+
+
 if __name__ == '__main__':
     app.run(debug=True)
